@@ -63,7 +63,7 @@ In one terminal, start the Simple Producer:
 
 ```bash
 cd build/producer
-./simple-producer
+./simple-producer unix:///run/nfd/producer0
 ```
 
 You should see output indicating that the producer is listening for Interests:
