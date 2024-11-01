@@ -1,11 +1,14 @@
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
 #include <ndn-cxx/encoding/block-helpers.hpp>
+#include <ndn-cxx/transport/unix-transport.hpp>
 #include <iostream>
 
 class SimpleProducer
 {
 public:
+    SimpleProducer(std::shared_ptr<ndn::Transport> ptr) : m_face(ptr) {}
+
     void run()
     {
         m_face.setInterestFilter(ndn::Name("/example/test/traceroute"),
@@ -73,11 +76,19 @@ private:
     ndn::KeyChain m_keyChain;
 };
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc < 2)
+    {
+        std::cerr << "Usage: simple-producer <sock-name>" << std::endl;
+        return 1;
+    }
+
+    auto ptr = ndn::UnixTransport::create(argv[1]);
+
     try
     {
-        SimpleProducer producer;
+        SimpleProducer producer(ptr);
         producer.run();
     }
     catch (const std::exception &e)
