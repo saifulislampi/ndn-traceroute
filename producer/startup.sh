@@ -18,4 +18,5 @@ do
 done
 
 # start producer
-/simple-producer "unix://$SOCK_PATH"
+# /simple-producer "unix://$SOCK_PATH"
+/simple-producer

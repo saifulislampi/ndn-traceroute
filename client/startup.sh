@@ -20,4 +20,5 @@ done
 # start client
 NAME="$1"
 HOP_LIMIT="$2"
-/traceroute-client "unix://$SOCK_PATH" "$NAME" "$HOP_LIMIT"
+# /traceroute-client "unix://$SOCK_PATH" "$NAME" "$HOP_LIMIT"
+/traceroute-client "$NAME" "$HOP_LIMIT"
