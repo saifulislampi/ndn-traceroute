@@ -17,5 +17,7 @@ do
     sleep 1
 done
 
-# start producer
-/simple-producer "unix://$SOCK_PATH"
+# start client
+NAME="$1"
+HOP_LIMIT="$2"
+/traceroute-client "unix://$SOCK_PATH" "$NAME" "$HOP_LIMIT"
