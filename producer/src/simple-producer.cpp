@@ -7,7 +7,7 @@
 class SimpleProducer
 {
 public:
-    SimpleProducer(std::shared_ptr<ndn::Transport> ptr) : m_face(ptr) {}
+    SimpleProducer(std::shared_ptr<ndn::Transport> transport) : m_face(transport) {}
 
     void run()
     {
@@ -84,15 +84,16 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    auto ptr = ndn::UnixTransport::create(argv[1]);
+    std::shared_ptr<ndn::Transport> transport = ndn::UnixTransport::create(argv[1]);
 
     try
     {
-        SimpleProducer producer(ptr);
+        SimpleProducer producer(transport);
         producer.run();
     }
     catch (const std::exception &e)
     {
+        transport.close();
         std::cerr << "ERROR: " << e.what() << std::endl;
     }
     return 0;

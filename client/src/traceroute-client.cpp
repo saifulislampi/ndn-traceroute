@@ -2,6 +2,7 @@
 #include <ndn-cxx/encoding/block-helpers.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
 #include <ndn-cxx/util/random.hpp>
+#include <ndn-cxx/transport/unix-transport.hpp>
 #include <iostream>
 #include <chrono>
 #include <unordered_map>
@@ -13,7 +14,7 @@
 class TracerouteClient
 {
 public:
-    TracerouteClient(const ndn::Name &targetName, uint8_t maxHopLimit);
+    TracerouteClient(std::shared_ptr<ndn::Transport> transport, const ndn::Name &targetName, uint8_t maxHopLimit);
     void run();
 
 private:
@@ -32,10 +33,11 @@ private:
     std::unordered_map<ndn::Name, std::chrono::steady_clock::time_point> m_sentInterests; // Maps Nonce to send time
 };
 
-TracerouteClient::TracerouteClient(const ndn::Name &targetName, uint8_t maxHopLimit)
+TracerouteClient::TracerouteClient(std::shared_ptr<ndn::Transport> transport, const ndn::Name &targetName, uint8_t maxHopLimit)
     : m_targetName(targetName),
       m_maxHopLimit(maxHopLimit),
-      m_currentHopLimit(1)
+      m_currentHopLimit(1),
+      m_face(transport)
 {
 }
 
@@ -172,20 +174,21 @@ void TracerouteClient::onNack(const ndn::Interest &interest, const ndn::lp::Nack
 
 int main(int argc, char **argv)
 {
-    if (argc < 2)
+    if (argc < 3)
     {
-        std::cerr << "Usage: traceroute-client <target-name> [max-hop-limit]" << std::endl;
+        std::cerr << "Usage: <traceroute-client> <target-name> [max-hop-limit]" << std::endl;
         return 1;
     }
 
-    ndn::Name targetName(argv[1]);
+    std::shared_ptr<ndn::Transport> transport = ndn::UnixTransport::create(argv[1]);
+    ndn::Name targetName(argv[2]);
     uint8_t maxHopLimit = 30; // Default maximum HopLimit
 
-    if (argc >= 3)
+    if (argc >= 4)
     {
         try
         {
-            int maxHopLimitInput = std::stoi(argv[2]);
+            int maxHopLimitInput = std::stoi(argv[3]);
 
             // Validate maximum HopLimit
             if (maxHopLimit < 1 || maxHopLimit > 255)
@@ -197,7 +200,7 @@ int main(int argc, char **argv)
         }
         catch (const std::invalid_argument &e)
         {
-            std::cerr << "Invalid maximum HopLimit: " << argv[2] << std::endl;
+            std::cerr << "Invalid maximum HopLimit: " << argv[3] << std::endl;
             return 1;
         }
     }
@@ -205,11 +208,13 @@ int main(int argc, char **argv)
     // Start the TracerouteClient with the specified target name and maximum HopLimit
     try
     {
-        TracerouteClient client(targetName, maxHopLimit);
+        TracerouteClient client(transport, targetName, maxHopLimit);
         client.run();
+        transport.close();
     }
     catch (const std::exception &e)
     {
+        transport.close();
         std::cerr << "ERROR: " << e.what() << std::endl;
         return 1;
     }
