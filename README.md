@@ -78,7 +78,7 @@ In another terminal, run the Traceroute Client:
 
 ```bash
 cd build/client
-./traceroute-client /example/test 5
+./traceroute-client unix:///run/nfd/client0 /example/test 5
 ```
 
 Replace `/example/test` with the target name you wish to trace, and `5` with the maximum HopLimit (optional, defaults to 30).
