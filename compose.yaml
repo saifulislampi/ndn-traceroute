@@ -1,20 +1,113 @@
 name: nfdnet
 
 services:
-  c1:
-    container_name: "c1"
+  f3:
+    container_name: "f3"
     image: nfd
     networks:
       - nfdnet
     configs:
-      - c1.conf
-    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /c1.conf; sleep infinity"]
+      - f3.conf
+    healthcheck:
+      test: "[ -e /run/nfd/nfd.sock ]"
+      interval: 50ms 
+      timeout: 10ms
+      retries: 200
+    depends_on:
+      f4:
+        condition: service_healthy
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /f3.conf; sleep infinity"]
+  f6:
+    container_name: "f6"
+    image: nfd
+    networks:
+      - nfdnet
+    configs:
+      - f6.conf
+    healthcheck:
+      test: "[ -e /run/nfd/nfd.sock ]"
+      interval: 50ms 
+      timeout: 10ms
+      retries: 200
+    depends_on:
+      f7:
+        condition: service_healthy
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /f6.conf; sleep infinity"]
+  f8:
+    container_name: "f8"
+    image: nfd
+    networks:
+      - nfdnet
+    configs:
+      - f8.conf
+    healthcheck:
+      test: "[ -e /run/nfd/nfd.sock ]"
+      interval: 50ms 
+      timeout: 10ms
+      retries: 200
+    depends_on:
+      f9:
+        condition: service_healthy
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /f8.conf; sleep infinity"]
+  f5:
+    container_name: "f5"
+    image: nfd
+    networks:
+      - nfdnet
+    configs:
+      - f5.conf
+    healthcheck:
+      test: "[ -e /run/nfd/nfd.sock ]"
+      interval: 50ms 
+      timeout: 10ms
+      retries: 200
+    depends_on:
+      f6:
+        condition: service_healthy
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /f5.conf; sleep infinity"]
   p1:
     container_name: "p1"
     image: nfd
     networks:
       - nfdnet
-    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /p1.conf; /simple-producer"]
+    healthcheck:
+      test: "[ -e /run/nfd/nfd.sock ]"
+      interval: 50ms 
+      timeout: 10ms
+      retries: 200
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /simple-producer p1 /test"]
+  f4:
+    container_name: "f4"
+    image: nfd
+    networks:
+      - nfdnet
+    configs:
+      - f4.conf
+    healthcheck:
+      test: "[ -e /run/nfd/nfd.sock ]"
+      interval: 50ms 
+      timeout: 10ms
+      retries: 200
+    depends_on:
+      f5:
+        condition: service_healthy
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /f4.conf; sleep infinity"]
+  f2:
+    container_name: "f2"
+    image: nfd
+    networks:
+      - nfdnet
+    configs:
+      - f2.conf
+    healthcheck:
+      test: "[ -e /run/nfd/nfd.sock ]"
+      interval: 50ms 
+      timeout: 10ms
+      retries: 200
+    depends_on:
+      f3:
+        condition: service_healthy
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /f2.conf; sleep infinity"]
   f1:
     container_name: "f1"
     image: nfd
@@ -22,13 +115,103 @@ services:
       - nfdnet
     configs:
       - f1.conf
+    healthcheck:
+      test: "[ -e /run/nfd/nfd.sock ]"
+      interval: 50ms 
+      timeout: 10ms
+      retries: 200
+    depends_on:
+      f2:
+        condition: service_healthy
     command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /f1.conf; sleep infinity"]
+  f7:
+    container_name: "f7"
+    image: nfd
+    networks:
+      - nfdnet
+    configs:
+      - f7.conf
+    healthcheck:
+      test: "[ -e /run/nfd/nfd.sock ]"
+      interval: 50ms 
+      timeout: 10ms
+      retries: 200
+    depends_on:
+      f8:
+        condition: service_healthy
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /f7.conf; sleep infinity"]
+  f9:
+    container_name: "f9"
+    image: nfd
+    networks:
+      - nfdnet
+    configs:
+      - f9.conf
+    healthcheck:
+      test: "[ -e /run/nfd/nfd.sock ]"
+      interval: 50ms 
+      timeout: 10ms
+      retries: 200
+    depends_on:
+      f10:
+        condition: service_healthy
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /f9.conf; sleep infinity"]
+  f10:
+    container_name: "f10"
+    image: nfd
+    networks:
+      - nfdnet
+    configs:
+      - f10.conf
+    healthcheck:
+      test: "[ -e /run/nfd/nfd.sock ]"
+      interval: 50ms 
+      timeout: 10ms
+      retries: 200
+    depends_on:
+      p1:
+        condition: service_healthy
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /f10.conf; sleep infinity"]
+  c1:
+    container_name: "c1"
+    image: nfd
+    networks:
+      - nfdnet
+    configs:
+      - c1.conf
+    healthcheck:
+      test: "[ -e /run/nfd/nfd.sock ]"
+      interval: 50ms 
+      timeout: 10ms
+      retries: 200
+    depends_on:
+      f1:
+        condition: service_healthy
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /c1.conf; sleep infinity"]
 
 configs:
-  c1.conf:
-    file: configs/c1.conf
+  f3.conf:
+    file: configs/f3.conf
+  f6.conf:
+    file: configs/f6.conf
+  f8.conf:
+    file: configs/f8.conf
+  f5.conf:
+    file: configs/f5.conf
+  f4.conf:
+    file: configs/f4.conf
+  f2.conf:
+    file: configs/f2.conf
   f1.conf:
     file: configs/f1.conf
+  f7.conf:
+    file: configs/f7.conf
+  f9.conf:
+    file: configs/f9.conf
+  f10.conf:
+    file: configs/f10.conf
+  c1.conf:
+    file: configs/c1.conf
 
 networks:
   nfdnet:

@@ -6,14 +6,16 @@
 class SimpleProducer
 {
 public:
-    void run()
+    SimpleProducer(char *name) : name(name) {}
+
+    void run(char *data_name)
     {
-        m_face.setInterestFilter(ndn::Name("/example/test/traceroute"),
+        m_face.setInterestFilter(ndn::Name(data_name),
                                  std::bind(&SimpleProducer::onInterest, this, std::placeholders::_1, std::placeholders::_2),
                                  std::bind(&SimpleProducer::onRegisterSuccess, this, std::placeholders::_1),
                                  std::bind(&SimpleProducer::onRegisterFailed, this, std::placeholders::_1, std::placeholders::_2));
 
-        std::cout << "SimpleProducer: Listening for Interests on /example/test/traceroute" << std::endl;
+        std::cout << "SimpleProducer: Listening for Interests on " << data_name << std::endl;
 
         m_face.processEvents();
     }
@@ -30,7 +32,7 @@ private:
         data.setFreshnessPeriod(ndn::time::milliseconds(1000));
 
         // Create content
-        ndn::Name senderName("/example/producer");
+        ndn::Name senderName(this->name);
         uint16_t replyCode = 4; // No Error
 
         // Build content block
@@ -69,16 +71,26 @@ private:
     }
 
 private:
+    char *name;
     ndn::Face m_face;
     ndn::KeyChain m_keyChain;
 };
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc < 3)
+    {
+        std::cerr << "Usage: simple-producer <producer-name> <data-name>" << std::endl;
+        return 1;
+    }
+
+    char *name = argv[1];
+    char *data_name = argv[2];
+
     try
     {
-        SimpleProducer producer;
-        producer.run();
+        SimpleProducer producer(name);
+        producer.run(data_name);
     }
     catch (const std::exception &e)
     {

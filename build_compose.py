@@ -101,28 +101,11 @@ class NFD_Network():
         nodes_str = '\n'.join('\n'.join(' '*4 + line for line in repr(node).split('\n')) for node in self.nodes)
         return f'NFD_Network(\n{nodes_str}\n)'
 
-class NFD_Node():
-    def service_lines(self):
-        return f'''{self.name}:
-  container_name: "{self.name}"
-  image: nfd
-  networks:
-    - nfdnet
-  configs:
-    - {self.name}.conf
-  command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /{self.name}.conf; {self.cmd}"]'''
-
-    def config_lines(self):
-        return f'''{self.name}.conf:
-  file: configs/{self.name}.conf'''
-
-
-class NFD_Producer(NFD_Node):
-    cmd = '/simple-producer'
-
+class NFD_Producer():
     def __init__(self, name, prefix):
         self.name = name
         self.prefix = prefix
+        self.cmd = f'/simple-producer {self.name} {self.prefix}'
 
     def service_lines(self):
         return f'''{self.name}:
@@ -130,6 +113,11 @@ class NFD_Producer(NFD_Node):
   image: nfd
   networks:
     - nfdnet
+  healthcheck:
+    test: "[ -e /run/nfd/nfd.sock ]"
+    interval: 50ms 
+    timeout: 10ms
+    retries: 200
   command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; {self.cmd}"]'''
 
     def config_lines(self):
@@ -138,13 +126,35 @@ class NFD_Producer(NFD_Node):
     def __repr__(self):
         return f'{type(self).__name__}(name={self.name}, prefix={self.prefix})'
 
-class NFD_Forwarder(NFD_Node):
+class NFD_Forwarder():
     cmd = 'sleep infinity'
 
     def __init__(self, name):
         self.name = name
         self.routes = {}
 
+    def service_lines(self):
+        return f'''{self.name}:
+  container_name: "{self.name}"
+  image: nfd
+  networks:
+    - nfdnet
+  configs:
+    - {self.name}.conf
+  healthcheck:
+    test: "[ -e /run/nfd/nfd.sock ]"
+    interval: 50ms 
+    timeout: 10ms
+    retries: 200
+  depends_on:
+''' + ''.join(f'''    {dest.name}:
+      condition: service_healthy
+''' for dest in self.routes.values()) + f'''  command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /{self.name}.conf; {self.cmd}"]'''
+
+    def config_lines(self):
+        return f'''{self.name}.conf:
+  file: configs/{self.name}.conf'''
+    
     def add_route(self, prefix: str, node: NFD_Node):
         if type(node) == NFD_Client:
             raise RuntimeError(f'cannot route towards client: {node.name}')

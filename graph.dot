@@ -3,7 +3,34 @@ digraph G {
     c1 -> f1 [label="/"]
 
     f1 [class="forwarder"]
-    f1 -> p1 [label="/example/test"]
+    f1 -> f2 [label="/test"]
 
-    p1 [class="producer" data="/example/test"]
+    f2 [class="forwarder"]
+    f2 -> f3 [label="/test"]
+
+    f3 [class="forwarder"]
+    f3 -> f4 [label="/test"]
+
+    f4 [class="forwarder"]
+    f4 -> f5 [label="/test"]
+
+    f5 [class="forwarder"]
+    f5 -> f6 [label="/test"]
+
+    f6 [class="forwarder"]
+    f6 -> f7 [label="/test"]
+
+    f7 [class="forwarder"]
+    f7 -> f8 [label="/test"]
+
+    f8 [class="forwarder"]
+    f8 -> f9 [label="/test"]
+
+    f9 [class="forwarder"]
+    f9 -> f10 [label="/test"]
+
+    f10 [class="forwarder"]
+    f10 -> p1 [label="/test"]
+
+    p1 [class="producer" data="/test"]
 }
