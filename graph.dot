@@ -3,7 +3,7 @@ digraph G {
     c1 -> f1 [label="/"]
 
     f1 [class="forwarder"]
-    f1 -> p1 [label="/test\n/example"]
+    f1 -> p1 [label="/example/test"]
 
-    p1 [class="producer"]
+    p1 [class="producer" data="/example/test"]
 }

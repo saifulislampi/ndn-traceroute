@@ -1,0 +1,34 @@
+name: nfdnet
+
+services:
+  c1:
+    container_name: "c1"
+    image: nfd
+    networks:
+      - nfdnet
+    configs:
+      - c1.conf
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /c1.conf; sleep infinity"]
+  p1:
+    container_name: "p1"
+    image: nfd
+    networks:
+      - nfdnet
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /p1.conf; /simple-producer"]
+  f1:
+    container_name: "f1"
+    image: nfd
+    networks:
+      - nfdnet
+    configs:
+      - f1.conf
+    command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /f1.conf; sleep infinity"]
+
+configs:
+  c1.conf:
+    file: configs/c1.conf
+  f1.conf:
+    file: configs/f1.conf
+
+networks:
+  nfdnet:

@@ -40,32 +40,107 @@ class NFD_Network():
     def create_node(self, node: pydot.core.Node):
         name = node.obj_dict['name']
 
+        qs = pydot.dot_parser.QuotedString('"')
         try:
-            role = pydot.dot_parser.QuotedString('"').search_string(node.obj_dict['attributes']['class'])[0][0]
+            role = qs.search_string(node.obj_dict['attributes']['class'])[0][0]
         except KeyError:
             raise RuntimeError(f'must define class for node {name}')
 
         if role == 'client':
             self.nodes.add(NFD_Client(name))
         elif role == 'producer':
-            self.nodes.add(NFD_Producer(name))
+            prefix = qs.search_string(node.obj_dict['attributes']['data'])[0][0]
+            self.nodes.add(NFD_Producer(name, prefix))
         elif role == 'forwarder':
             self.nodes.add(NFD_Forwarder(name))
         else:
             raise RuntimeError(f'unknown class: {role}')
 
+    def build(self):
+        self.build_configs()
+        self.build_compose()
+
+    def build_configs(self):
+        for node in self.nodes:
+            if type(node) is NFD_Producer:
+                continue
+
+            lines = []
+            for prefix, dest in node.routes.items():
+                lines.append(f'route add {prefix} tcp://{dest.name}')
+
+            with open(f'configs/{node.name}.conf', 'w') as fp:
+                fp.write('\n'.join(lines))
+
+    def build_compose(self):
+        lines = []
+        lines.append('name: nfdnet')
+        lines.append('')
+
+        lines.append('services:')
+        for node in self.nodes:
+            for line in node.service_lines().split('\n'):
+                lines.append('  ' + line)
+
+        lines.append('')
+
+        lines.append('configs:')
+        for node in self.nodes:
+            for line in node.config_lines().split('\n'):
+                if line:
+                    lines.append('  ' + line)
+
+        lines.append('')
+        lines.append('networks:')
+        lines.append('  nfdnet:')
+
+        with open('compose.yaml', 'w') as fp:
+            fp.write('\n'.join(lines))
+
     def __repr__(self):
         nodes_str = '\n'.join('\n'.join(' '*4 + line for line in repr(node).split('\n')) for node in self.nodes)
         return f'NFD_Network(\n{nodes_str}\n)'
 
-class NFD_Producer():
-    def __init__(self, name):
+class NFD_Node():
+    def service_lines(self):
+        return f'''{self.name}:
+  container_name: "{self.name}"
+  image: nfd
+  networks:
+    - nfdnet
+  configs:
+    - {self.name}.conf
+  command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /{self.name}.conf; {self.cmd}"]'''
+
+    def config_lines(self):
+        return f'''{self.name}.conf:
+  file: configs/{self.name}.conf'''
+
+
+class NFD_Producer(NFD_Node):
+    cmd = '/simple-producer'
+
+    def __init__(self, name, prefix):
         self.name = name
+        self.prefix = prefix
+
+    def service_lines(self):
+        return f'''{self.name}:
+  container_name: "{self.name}"
+  image: nfd
+  networks:
+    - nfdnet
+  command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; {self.cmd}"]'''
+
+    def config_lines(self):
+        return ''
 
     def __repr__(self):
-        return f'{type(self).__name__}(name={self.name})'
+        return f'{type(self).__name__}(name={self.name}, prefix={self.prefix})'
 
-class NFD_Forwarder():
+class NFD_Forwarder(NFD_Node):
+    cmd = 'sleep infinity'
+
     def __init__(self, name):
         self.name = name
         self.routes = {}
@@ -90,4 +165,5 @@ if __name__ == '__main__':
     filename = sys.argv[1]
     graphs = pydot.graph_from_dot_file(filename)
     G = graphs[0]
-    print(NFD_Network(G))
+    
+    NFD_Network(G).build()
