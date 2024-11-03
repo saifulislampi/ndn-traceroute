@@ -28,3 +28,7 @@ CTestTestfile.cmake
 
 # Ignore python venv
 .venv/
+
+# Ignore docker compose and configs
+compose.yaml
+configs/
