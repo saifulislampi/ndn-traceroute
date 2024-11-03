@@ -63,7 +63,7 @@ In one terminal, start the Simple Producer:
 
 ```bash
 cd build/producer
-./simple-producer
+./simple-producer /example/test/traceroute
 ```
 
 You should see output indicating that the producer is listening for Interests:
@@ -78,7 +78,7 @@ In another terminal, run the Traceroute Client:
 
 ```bash
 cd build/client
-./traceroute-client unix:///run/nfd/client0 /example/test 5
+./traceroute-client /example/test 5
 ```
 
 Replace `/example/test` with the target name you wish to trace, and `5` with the maximum HopLimit (optional, defaults to 30).
@@ -96,5 +96,4 @@ Hop 2, RTT: 6 ms, Forwarder: /example/producer, Reply Code: 4
 ### Notes
 
 - The Traceroute Client sends Interests with increasing HopLimits to discover each hop along the path to the target name.
-- The Simple Producer responds to traceroute Interests matching `/example/test/traceroute`.
 - Ensure that both applications are using the same prefix.
