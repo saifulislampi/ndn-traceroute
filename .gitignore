@@ -2,7 +2,6 @@
 build/
 dist/
 
-
 # Ignore OS generated files
 .DS_Store
 Thumbs.db
@@ -26,3 +25,6 @@ CTestTestfile.cmake
 # Ignore temporary files
 *.tmp
 *.swp
+
+# Ignore python venv
+.venv/

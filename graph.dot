@@ -1,0 +1,9 @@
+digraph G {
+    c1 [class="client"]
+    c1 -> f1 [label="/"]
+
+    f1 [class="forwarder"]
+    f1 -> p1 [label="/test\n/example"]
+
+    p1 [class="producer"]
+}
