@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import os
 import pydot
 from typing import Union, TypeVar
 import itertools
@@ -69,11 +70,15 @@ class NFD_Network():
             for prefix, dest in node.routes.items():
                 lines.append(f'route add {prefix} tcp://{dest.name}')
 
+            if not os.path.isdir('configs'):
+                os.mkdir('configs')
+
             with open(f'configs/{node.name}.conf', 'w') as fp:
                 fp.write('\n'.join(lines))
 
     def build_compose(self):
         lines = []
+        lines.append('# this file was AUTO-GENERATED')
         lines.append('name: nfdnet')
         lines.append('')
 
