@@ -70,10 +70,10 @@ class NFD_Network():
             for prefix, dest in node.routes.items():
                 lines.append(f'route add {prefix} tcp://{dest.name}')
 
-            if not os.path.isdir('configs'):
-                os.mkdir('configs')
+            if not os.path.isdir('build/configs'):
+                os.mkdir('build/configs')
 
-            with open(f'configs/{node.name}.conf', 'w') as fp:
+            with open(f'build/configs/{node.name}.conf', 'w') as fp:
                 fp.write('\n'.join(lines))
 
     def build_compose(self):
@@ -99,7 +99,7 @@ class NFD_Network():
         lines.append('networks:')
         lines.append('  nfdnet:')
 
-        with open('compose.yaml', 'w') as fp:
+        with open('build/compose.yaml', 'w') as fp:
             fp.write('\n'.join(lines))
 
     def __repr__(self):
