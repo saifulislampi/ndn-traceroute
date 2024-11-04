@@ -3,10 +3,7 @@
 import sys
 import os
 import pydot
-from typing import Union, TypeVar
 import itertools
-
-NFD_Node = TypeVar("Union[NFD_Producer, NFD_Client, NFD_Forwarder]")
 
 class NFD_Network():
     def __init__(self, graph):
@@ -79,7 +76,7 @@ class NFD_Network():
     def build_compose(self):
         lines = []
         lines.append('# this file was AUTO-GENERATED')
-        lines.append('name: nfdnet')
+        lines.append('name: ndn-net')
         lines.append('')
 
         lines.append('services:')
@@ -97,7 +94,7 @@ class NFD_Network():
 
         lines.append('')
         lines.append('networks:')
-        lines.append('  nfdnet:')
+        lines.append('  ndn-net:')
 
         with open('build/compose.yaml', 'w') as fp:
             fp.write('\n'.join(lines))
@@ -106,24 +103,28 @@ class NFD_Network():
         nodes_str = '\n'.join('\n'.join(' '*4 + line for line in repr(node).split('\n')) for node in self.nodes)
         return f'NFD_Network(\n{nodes_str}\n)'
 
-class NFD_Producer():
+class NFD_Node():
+    def service_lines(self):
+        return '''{0}:
+  container_name: "{0}"
+  image: nfd
+  networks:
+    - ndn-net
+  healthcheck:
+    test: "[ -e /run/nfd/nfd.sock ]"
+    interval: 50ms 
+    timeout: 10ms
+    retries: 200
+'''
+
+class NFD_Producer(NFD_Node):
     def __init__(self, name, prefix):
         self.name = name
         self.prefix = prefix
         self.cmd = f'/simple-producer {self.name} {self.prefix}'
 
     def service_lines(self):
-        return f'''{self.name}:
-  container_name: "{self.name}"
-  image: nfd
-  networks:
-    - nfdnet
-  healthcheck:
-    test: "[ -e /run/nfd/nfd.sock ]"
-    interval: 50ms 
-    timeout: 10ms
-    retries: 200
-  command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; {self.cmd}"]'''
+        return super().service_lines().format(self.name) + f'''  command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; {self.cmd}"]'''
 
     def config_lines(self):
         return ''
@@ -131,7 +132,7 @@ class NFD_Producer():
     def __repr__(self):
         return f'{type(self).__name__}(name={self.name}, prefix={self.prefix})'
 
-class NFD_Forwarder():
+class NFD_Forwarder(NFD_Node):
     cmd = 'sleep infinity'
 
     def __init__(self, name):
@@ -139,18 +140,8 @@ class NFD_Forwarder():
         self.routes = {}
 
     def service_lines(self):
-        return f'''{self.name}:
-  container_name: "{self.name}"
-  image: nfd
-  networks:
-    - nfdnet
-  configs:
+        return super().service_lines().format(self.name) + f'''  configs:
     - {self.name}.conf
-  healthcheck:
-    test: "[ -e /run/nfd/nfd.sock ]"
-    interval: 50ms 
-    timeout: 10ms
-    retries: 200
   depends_on:
 ''' + ''.join(f'''    {dest.name}:
       condition: service_healthy
