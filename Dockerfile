@@ -20,9 +20,5 @@ RUN --mount=type=bind,source=producer,target=/tmp/producer,rw <<EOF
     cp simple-producer /
 EOF
 
-RUN mkdir /config
-RUN cp /etc/ndn/nfd.conf.sample /config/nfd.conf
-
 ENTRYPOINT ["sh", "-c"]
-CMD ["/usr/bin/nfd --config /config/nfd.conf"]
-
+CMD ["/usr/bin/nfd --config /etc/ndn/nfd.conf.sample"]
