@@ -23,4 +23,4 @@ EOF
 RUN cp /etc/ndn/nfd.conf.sample /etc/ndn/nfd.conf
 
 ENTRYPOINT ["sh", "-c"]
-CMD ["/bin/nfd-start; while ! /bin/nfd-status; do :; done"]
+CMD ["/bin/nfd-start; while ! /bin/nfd-status > /dev/null 2> /dev/null; do :; done"]
