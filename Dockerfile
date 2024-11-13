@@ -1,7 +1,7 @@
-FROM ghcr.io/named-data/nfd-build:latest AS build
+FROM nfd-base
 
 RUN apt-get install -Uy --no-install-recommends \
-        cmake \
+        cmake sudo \
     && apt-get distclean
 
 RUN --mount=type=bind,source=client,target=/tmp/client,rw <<EOF
@@ -20,5 +20,7 @@ RUN --mount=type=bind,source=producer,target=/tmp/producer,rw <<EOF
     cp simple-producer /
 EOF
 
+RUN cp /etc/ndn/nfd.conf.sample /etc/ndn/nfd.conf
+
 ENTRYPOINT ["sh", "-c"]
-CMD ["/usr/bin/nfd --config /etc/ndn/nfd.conf.sample"]
+CMD ["/bin/nfd-start; while ! /bin/nfd-status; do :; done"]

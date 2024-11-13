@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 import sys
-import os
 import pydot
 import itertools
+
+from pathlib import Path
 
 class NFD_Network():
     def __init__(self, graph):
@@ -55,10 +56,14 @@ class NFD_Network():
             raise RuntimeError(f'unknown class: {role}')
 
     def build(self):
-        self.build_configs()
-        self.build_compose()
+        build_dir = Path('build')
+        if not build_dir.is_dir():
+            build_dir.mkdir()
 
-    def build_configs(self):
+        self.build_configs(build_dir)
+        self.build_compose(build_dir)
+
+    def build_configs(self, build_dir):
         for node in self.nodes:
             if type(node) is NFD_Producer:
                 continue
@@ -67,13 +72,15 @@ class NFD_Network():
             for prefix, dest in node.routes.items():
                 lines.append(f'route add {prefix} tcp://{dest.name}')
 
-            if not os.path.isdir('build/configs'):
-                os.mkdir('build/configs')
+            config_dir = Path(build_dir, 'configs')
+            if not config_dir.is_dir():
+                config_dir.mkdir()
 
-            with open(f'build/configs/{node.name}.conf', 'w') as fp:
+            conf = Path(config_dir, f'{node.name}.conf')
+            with conf.open('w') as fp:
                 fp.write('\n'.join(lines))
 
-    def build_compose(self):
+    def build_compose(self, build_dir):
         lines = []
         lines.append('# this file was AUTO-GENERATED')
         lines.append('name: ndn-net')
@@ -96,7 +103,7 @@ class NFD_Network():
         lines.append('networks:')
         lines.append('  ndn-net:')
 
-        with open('build/compose.yaml', 'w') as fp:
+        with Path(build_dir, 'compose.yaml').open('w') as fp:
             fp.write('\n'.join(lines))
 
     def __repr__(self):
@@ -111,10 +118,9 @@ class NFD_Node():
   networks:
     - ndn-net
   healthcheck:
-    test: "[ -e /run/nfd/nfd.sock ]"
-    interval: 50ms 
-    timeout: 10ms
-    retries: 200
+    test: /bin/nfd-status > /dev/null 2> /dev/null
+    interval: 1s
+    retries: 10
 '''
 
 class NFD_Producer(NFD_Node):
@@ -124,7 +130,7 @@ class NFD_Producer(NFD_Node):
         self.cmd = f'/simple-producer {self.name} {self.prefix}'
 
     def service_lines(self):
-        return super().service_lines().format(self.name) + f'''  command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; {self.cmd}"]'''
+        return super().service_lines().format(self.name) + f'''  command: ["/bin/nfd-start; while ! /bin/nfd-status; do :; done; {self.cmd}"]'''
 
     def config_lines(self):
         return ''
@@ -145,7 +151,7 @@ class NFD_Forwarder(NFD_Node):
   depends_on:
 ''' + ''.join(f'''    {dest.name}:
       condition: service_healthy
-''' for dest in self.routes.values()) + f'''  command: ["/usr/bin/nfd --config /config/nfd.conf & while [ ! -e /run/nfd/nfd.sock ]; do :; done; /usr/bin/nfdc -f /{self.name}.conf; {self.cmd}"]'''
+''' for dest in self.routes.values()) + f'''  command: ["/bin/nfd-start; while ! /bin/nfd-status; do :; done; /bin/nfdc -f /{self.name}.conf; {self.cmd}"]'''
 
     def config_lines(self):
         return f'''{self.name}.conf:

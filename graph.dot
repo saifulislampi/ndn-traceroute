@@ -1,14 +1,25 @@
 digraph G {
     c1 [class="client"]
     c1 -> f1 [label="/"]
-    
+
     c2 [class="client"]
     c2 -> f1 [label="/"]
 
     f1 [class="forwarder"]
-    f1 -> p1 [label="/test1"]
-    f1 -> p2 [label="/test2"]
+    f1 -> f2 [label="/west"]
+    f1 -> f3 [label="/east"]
+    
+    f2 [class="forwarder"]
+    f2 -> p1 [label="/west/test1"]
+    f2 -> p2 [label="/west/test2"]
+    
+    f3 [class="forwarder"]
+    f3 -> p3 [label="/east/test1"]
+    f3 -> p4 [label="/east/test2"]
+    
 
-    p1 [class="producer" data="/test1"]
-    p2 [class="producer" data="/test2"]
+    p1 [class="producer" data="/west/test1/data"]
+    p2 [class="producer" data="/west/test2/data"]
+    p3 [class="producer" data="/east/test1/data"]
+    p4 [class="producer" data="/east/test2/data"]
 }
