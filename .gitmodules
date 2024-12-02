@@ -1,3 +1,6 @@
 [submodule "forwarder/NFD"]
 	path = NFD
 	url = git@github.com:saifulislampi/NFD.git
+[submodule "NFD"]
+	path = NFD
+	url = git@github.com:saifulislampi/NFD.git
