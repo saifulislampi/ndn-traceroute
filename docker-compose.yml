@@ -1,0 +1,43 @@
+services:
+  client:
+    image: traceroute-client
+    container_name: client
+    networks:
+      ndn-net:
+    volumes:
+      - ./configs/nfd1.conf:/etc/ndn/nfd.conf:ro
+    command: >
+      sh -c "sleep 1;
+             nfdc face create udp://intermediate;
+             nfdc route add /producer/prefix udp://intermediate;
+             /client/build/traceroute-client /producer/prefix"
+
+  producer:
+    image: simple-producer
+    container_name: producer
+    networks:
+      ndn-net:
+    volumes:
+      - ./configs/nfd2.conf:/etc/ndn/nfd.conf:ro
+    command: >
+      sh -c "sleep 1;
+             nfdc face create udp://intermediate;
+             /producer/build/simple-producer p2 /producer/prefix"
+
+  intermediate:
+    image: nfd-traceroute
+    container_name: intermediate
+    networks:
+      ndn-net:
+    volumes:
+      - ./configs/intermediate.conf:/etc/ndn/nfd.conf:ro
+    command: >
+      sh -c "sleep 1;
+             nfdc face create udp://client;
+             nfdc face create udp://producer;
+             nfdc route add /producer/prefix udp://producer;
+             tail -f /dev/null"
+
+networks:
+  ndn-net:
+

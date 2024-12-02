@@ -1,0 +1,15 @@
+FROM nfd-traceroute
+
+# Install necessary build tools
+RUN apt-get update && apt-get install -y \
+    cmake build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and build the client application
+COPY client /client
+RUN mkdir /client/build && cd /client/build && cmake .. && make
+
+# Set the entrypoint to start NFD and run the client
+ENTRYPOINT ["/start-nfd.sh"]
+CMD ["/client/build/traceroute-client", "/producer/prefix"]
+
