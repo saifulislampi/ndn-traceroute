@@ -90,7 +90,7 @@ class NFD_Node():
         )
 
     def face_commands(self):
-        return {f'nfdc face create upd://{face.name}' for face in self.faces}
+        return {f'nfdc face create tcp://{face.name}' for face in self.faces}
 
 class NFD_Producer(NFD_Node):
     def __init__(self, name, prefix):
@@ -126,7 +126,7 @@ class NFD_Forwarder(NFD_Node):
         )
 
     def route_commands(self):
-        return {f'nfdc route add {prefix} udp://{node.name}' for prefix, node in self.routes.items()}
+        return {f'nfdc route add {prefix} tcp://{node.name}' for prefix, node in self.routes.items()}
 
 class NFD_Client(NFD_Forwarder):
     pass
