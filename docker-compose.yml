@@ -6,10 +6,12 @@ services:
       ndn-net:
     volumes:
       - ./configs/nfd1.conf:/etc/ndn/nfd.conf:ro
+      - ./scripts/start-nfd.sh:/start-nfd.sh:ro
     command: >
-      sh -c "sleep 1;
-             nfdc face create udp://intermediate;
-             nfdc route add /producer/prefix udp://intermediate;
+      sh -c "/start-nfd.sh;
+             sleep 5;
+             nfdc face create tcp://intermediate;
+             nfdc route add /producer/prefix tcp://intermediate;
              /client/build/traceroute-client /producer/prefix"
 
   producer:
@@ -19,9 +21,11 @@ services:
       ndn-net:
     volumes:
       - ./configs/nfd2.conf:/etc/ndn/nfd.conf:ro
+      - ./scripts/start-nfd.sh:/start-nfd.sh:ro
     command: >
-      sh -c "sleep 1;
-             nfdc face create udp://intermediate;
+      sh -c "/start-nfd.sh;
+             sleep 5;
+             nfdc face create tcp://intermediate;
              /producer/build/simple-producer p2 /producer/prefix"
 
   intermediate:
@@ -31,11 +35,14 @@ services:
       ndn-net:
     volumes:
       - ./configs/intermediate.conf:/etc/ndn/nfd.conf:ro
+      - ./scripts/start-nfd.sh:/start-nfd.sh:ro
     command: >
-      sh -c "sleep 1;
-             nfdc face create udp://client;
-             nfdc face create udp://producer;
-             nfdc route add /producer/prefix udp://producer;
+      sh -c "/start-nfd.sh;
+             sleep 5;
+             nfdc face create tcp://client;
+             nfdc face create tcp://producer;
+             nfdc route add /producer/prefix tcp://producer;
+             nfdc route add /ndn/forwarder1 tcp://client;
              tail -f /dev/null"
 
 networks:
