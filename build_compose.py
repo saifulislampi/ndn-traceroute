@@ -34,6 +34,8 @@ class NFD_Network():
                     raise RuntimeError(f'edge missing label attr: {edge}')
 
                 for prefix in prefixes:
+                    src.faces.add(dest)
+                    dest.faces.add(src)
                     src.add_route(prefix, dest)
 
     def create_node(self, node: pydot.core.Node):
@@ -56,31 +58,6 @@ class NFD_Network():
             raise RuntimeError(f'unknown class: {role}')
 
     def build(self):
-        build_dir = Path('build')
-        if not build_dir.is_dir():
-            build_dir.mkdir()
-
-        self.build_configs(build_dir)
-        self.build_compose(build_dir)
-
-    def build_configs(self, build_dir):
-        for node in self.nodes:
-            if type(node) is NFD_Producer:
-                continue
-
-            lines = []
-            for prefix, dest in node.routes.items():
-                lines.append(f'route add {prefix} tcp://{dest.name}')
-
-            config_dir = Path(build_dir, 'configs')
-            if not config_dir.is_dir():
-                config_dir.mkdir()
-
-            conf = Path(config_dir, f'{node.name}.conf')
-            with conf.open('w') as fp:
-                fp.write('\n'.join(lines))
-
-    def build_compose(self, build_dir):
         lines = []
         lines.append('# this file was AUTO-GENERATED')
         lines.append('name: ndn-net')
@@ -88,83 +65,68 @@ class NFD_Network():
 
         lines.append('services:')
         for node in self.nodes:
-            for line in node.service_lines().split('\n'):
+            for line in node.service_lines():
                 lines.append('  ' + line)
 
         lines.append('')
 
-        lines.append('configs:')
-        for node in self.nodes:
-            for line in node.config_lines().split('\n'):
-                if line:
-                    lines.append('  ' + line)
-
-        lines.append('')
         lines.append('networks:')
         lines.append('  ndn-net:')
 
-        with Path(build_dir, 'compose.yaml').open('w') as fp:
-            fp.write('\n'.join(lines))
-
-    def __repr__(self):
-        nodes_str = '\n'.join('\n'.join(' '*4 + line for line in repr(node).split('\n')) for node in self.nodes)
-        return f'NFD_Network(\n{nodes_str}\n)'
+        print('\n'.join(lines))
 
 class NFD_Node():
-    def service_lines(self):
-        return '''{0}:
-  container_name: "{0}"
-  image: nfd
-  networks:
-    - ndn-net
-  healthcheck:
-    test: /bin/nfd-status > /dev/null 2> /dev/null
-    interval: 1s
-    retries: 10
-'''
+    def service_headers(self):
+        return (
+            '{}:'.format(self.name),
+            '  image: nfd',
+            '  container_name: {}'.format(self.name),
+            '  networks:',
+            '    ndn-net:',
+            '  volumes:',
+            '    - ./configs/{}.conf:/etc/ndn/nfd.conf:ro'.format(self.name),
+            '  command: >',
+            '    sh -c "sleep 1;'
+        )
+
+    def face_commands(self):
+        return {f'nfdc face create upd://{face.name}' for face in self.faces}
 
 class NFD_Producer(NFD_Node):
     def __init__(self, name, prefix):
         self.name = name
         self.prefix = prefix
-        self.cmd = f'/simple-producer {self.name} {self.prefix}'
+        self.faces = set()
 
     def service_lines(self):
-        return super().service_lines().format(self.name) + f'''  command: ["/bin/nfd-start; while ! /bin/nfd-status; do :; done; {self.cmd}"]'''
-
-    def config_lines(self):
-        return ''
-
-    def __repr__(self):
-        return f'{type(self).__name__}(name={self.name}, prefix={self.prefix})'
+        return (
+          *(self.service_headers()),
+          *('           ' + command for command in self.face_commands()),
+            '           /producer/build/simple-producer {} {}"'.format(self.name, self.prefix)
+        )
 
 class NFD_Forwarder(NFD_Node):
-    cmd = 'sleep infinity'
-
     def __init__(self, name):
         self.name = name
+        self.faces = set()
         self.routes = {}
 
-    def service_lines(self):
-        return super().service_lines().format(self.name) + f'''  configs:
-    - {self.name}.conf
-  depends_on:
-''' + ''.join(f'''    {dest.name}:
-      condition: service_healthy
-''' for dest in self.routes.values()) + f'''  command: ["/bin/nfd-start; while ! /bin/nfd-status; do :; done; /bin/nfdc -f /{self.name}.conf; {self.cmd}"]'''
-
-    def config_lines(self):
-        return f'''{self.name}.conf:
-  file: configs/{self.name}.conf'''
-    
     def add_route(self, prefix: str, node: NFD_Node):
         if type(node) == NFD_Client:
             raise RuntimeError(f'cannot route towards client: {node.name}')
 
         self.routes[prefix] = node
 
-    def __repr__(self):
-        return f'{type(self).__name__}(name={self.name},\n' + ''.join(' '*4 + f'{prefix} --> {node.name}\n' for prefix, node in self.routes.items()) + ')'
+    def service_lines(self):
+        return (
+          *(self.service_headers()),
+          *('           ' + command for command in self.face_commands()),
+          *('           ' + command for command in self.route_commands()),
+            '           tail -f /dev/null"'
+        )
+
+    def route_commands(self):
+        return {f'nfdc route add {prefix} udp://{node.name}' for prefix, node in self.routes.items()}
 
 class NFD_Client(NFD_Forwarder):
     pass
