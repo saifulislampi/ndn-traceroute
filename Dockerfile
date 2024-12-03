@@ -21,7 +21,7 @@ RUN <<EOF
 EOF
 
 # Copy the start script
-COPY scripts/start-nfd.sh /start-nfd.sh
+COPY utils/start-nfd.sh /start-nfd.sh
 RUN chmod +x /start-nfd.sh
 
 EXPOSE 6363/tcp 6363/udp 9696/tcp

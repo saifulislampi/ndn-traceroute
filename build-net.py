@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
+import argparse
 import sys
 import pydot
 import itertools
 
 from pathlib import Path
+from os import system
 
 class NFD_Network():
     def __init__(self, graph):
@@ -57,7 +59,29 @@ class NFD_Network():
         else:
             raise RuntimeError(f'unknown class: {role}')
 
-    def build(self):
+    def build(self, template, build_dir=None):
+        if build_dir is None:
+            build_dir = Path('build')
+
+        if not build_dir.is_dir():
+            build_dir.mkdir()
+
+        self.write_configs(build_dir, template)
+        self.write_compose(build_dir)
+
+    def write_configs(self, build_dir, template):
+        if not template.is_file():
+            raise RuntimeError(f'{template} not found')
+
+        config_dir = Path(build_dir, 'configs')
+        if not config_dir.is_dir():
+            config_dir.mkdir()
+
+        for node in self.nodes:
+            target = Path(config_dir, node.name + '.conf')
+            system(f'sed -e "52s|###NAME###|/nfd/{node.name}|" {template} > {target}')
+
+    def write_compose(self, build_dir):
         lines = []
         lines.append('# this file was AUTO-GENERATED')
         lines.append('name: ndn-net')
@@ -73,7 +97,9 @@ class NFD_Network():
         lines.append('networks:')
         lines.append('  ndn-net:')
 
-        print('\n'.join(lines))
+        target = Path(build_dir, 'compose.yaml')
+        with target.open('w') as fp:
+            fp.write('\n'.join(lines))
 
 class NFD_Node():
     def service_headers(self):
@@ -86,11 +112,12 @@ class NFD_Node():
             '  volumes:',
             '    - ./configs/{}.conf:/etc/ndn/nfd.conf:ro'.format(self.name),
             '  command: >',
-            '    sh -c "sleep 1;'
+            '    sh -c "/start-nfd.sh;',
+            '           sleep 5;'
         )
 
     def face_commands(self):
-        return {f'nfdc face create tcp://{face.name}' for face in self.faces}
+        return {f'nfdc face create tcp://{face.name};' for face in self.faces}
 
 class NFD_Producer(NFD_Node):
     def __init__(self, name, prefix):
@@ -126,18 +153,23 @@ class NFD_Forwarder(NFD_Node):
         )
 
     def route_commands(self):
-        return {f'nfdc route add {prefix} tcp://{node.name}' for prefix, node in self.routes.items()}
+        return {f'nfdc route add {prefix} tcp://{node.name};' for prefix, node in self.routes.items()}
 
 class NFD_Client(NFD_Forwarder):
     pass
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print('expecting filename', file=sys.stderr)
-        exit(1)
+    parser = argparse.ArgumentParser(
+        prog='build-net.py',
+        description='A program to build a docker compose file for an NDN network given a .dot file specifying the network',
+    )
 
-    filename = sys.argv[1]
-    graphs = pydot.graph_from_dot_file(filename)
-    G = graphs[0]
-    
-    NFD_Network(G).build()
+    parser.add_argument('GRAPH', help='.dot file of the network', type=Path)
+    parser.add_argument('CONFIG_TEMPLATE', help='special NFD configuration template file', type=Path)
+
+    args = parser.parse_args()
+
+    graphs = pydot.graph_from_dot_file(args.GRAPH)
+
+    network = NFD_Network(graphs[0])
+    network.build(args.CONFIG_TEMPLATE)
