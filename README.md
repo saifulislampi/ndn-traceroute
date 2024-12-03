@@ -93,6 +93,21 @@ Hop 2, RTT: 6 ms, Forwarder: /example/producer, Reply Code: 4
 ...
 ```
 
+### Automatic Network Generation with Docker
+
+```bash
+docker build -f NFD/Dockerfile -t nfd-base --target build NFD/
+docker build -t nfd .
+python3 build-net.py graph.dot utils/nfd.conf.template
+'''
+
+'''bash
+cd build
+docker compose up -d
+# wait >5 seconds for containers to finish startup
+docker exec c1 /client/build/traceroute-client ...
+```
+
 ### Notes
 
 - The Traceroute Client sends Interests with increasing HopLimits to discover each hop along the path to the target name.
