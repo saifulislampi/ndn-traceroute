@@ -132,7 +132,7 @@ void TracerouteClient::onData(const ndn::Interest &interest, const ndn::Data &da
     uint16_t replyCode = static_cast<uint16_t>(ndn::readNonNegativeInteger(*it));
 
     // Display hop information
-    std::cout << "Hop " << static_cast<int>(m_currentHopLimit - 1)
+    std::cout << "[TRACEROUTE] Hop " << static_cast<int>(m_currentHopLimit - 1)
               << ", RTT: " << rtt << " ms"
               << ", Forwarder: " << senderName.toUri()
               << ", Reply Code: " << replyCode << std::endl;

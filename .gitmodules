@@ -1,3 +1,4 @@
 [submodule "forwarder/NFD"]
 	path = NFD
-	url = git@github.com:saifulislampi/NFD.git
+	url = https://github.com/saifulislampi/NFD.git
+	branch = feature/traceroute
