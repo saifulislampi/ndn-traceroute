@@ -1,0 +1,59 @@
+digraph G {
+    f1 [class="forwarder"]
+    f1 -> f2 [label="/south\n/north"]
+    f1 -> f3 [label="/north"]
+    f1 -> f4 [label="/north\n/south"]
+    f1 -> p2 [label="/north/two"]
+
+    f2 [class="forwarder"]
+    f2 -> f5 [label="/north"]
+    f2 -> f9 [label="/south/east"]
+    f2 -> f10 [label="/south/west"]
+
+    f3 [class="forwarder"]
+    f3 -> f5 [label="/north"]
+
+    f4 [class="forwarder"]
+    f4 -> f5 [label="/north"]
+    f4 -> p2 [label="/north/two"]
+    f4 -> f7 [label="/south"]
+
+    f5 [class="forwarder"]
+    f5 -> f6 [label="/north/one"]
+    f5 -> f7 [label="/north/one"]
+    f5 -> f8 [label="/north"]
+    f5 -> p2 [label="/north/two"]
+
+    f6 [class="forwarder"]
+    f6 -> p1a [label="/north/one"]
+
+    f7 [class="forwarder"]
+    f7 -> p1b [label="/north/one"]
+    f7 -> f10 [label="/south/west"]
+
+    f8 [class="forwarder"]
+    f8 -> p2 [label="/north/two"]
+    f8 -> p1c [label="/north/one"]
+
+    p1a [class="producer" data="/north/one/data"]
+    p1b [class="producer" data="/north/one/data"]
+    p1c [class="producer" data="/north/one/data"]
+
+    p2 [class="producer" data="/north/two/data"]
+
+    c1 [class="client"]
+    c1 -> f1
+
+    f9 [class="forwarder"]
+    f9 -> p3 [label="/south/east/three"]
+    f9 -> p4 [label="/south/east/four"]
+
+    f10 [class="forwarder"]
+    f10 -> p5 [label="/south/west/five"]
+    f10 -> p6 [label="/south/west/six"]
+
+    p3 [class="producer" data="/south/east/three/data"]
+    p4 [class="producer" data="/south/east/four/data"]
+    p5 [class="producer" data="/south/west/five/data"]
+    p6 [class="producer" data="/south/west/six/data"]
+}

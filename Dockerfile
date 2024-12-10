@@ -28,5 +28,4 @@ EXPOSE 6363/tcp 6363/udp 9696/tcp
 
 VOLUME /etc/ndn/nfd.conf
 
-ENTRYPOINT ["/start-nfd.sh"]
-CMD ["sleep", "infinity"]
+CMD ["sh", "-c", "/start-nfd.sh; tail -f /dev/null"]
