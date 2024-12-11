@@ -24,8 +24,6 @@ EOF
 COPY utils/start-nfd.sh /start-nfd.sh
 RUN chmod +x /start-nfd.sh
 
-EXPOSE 6363/tcp 6363/udp 9696/tcp
-
 VOLUME /etc/ndn/nfd.conf
 
 CMD ["sh", "-c", "/start-nfd.sh; tail -f /dev/null"]

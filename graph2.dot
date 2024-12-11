@@ -42,7 +42,8 @@ digraph G {
     p2 [class="producer" data="/north/two/data"]
 
     c1 [class="client"]
-    c1 -> f1
+    c1 -> f1 [label="/"]
+    c1 -> ns [label="/nfd"]
 
     f9 [class="forwarder"]
     f9 -> p3 [label="/south/east/three"]
@@ -56,4 +57,16 @@ digraph G {
     p4 [class="producer" data="/south/east/four/data"]
     p5 [class="producer" data="/south/west/five/data"]
     p6 [class="producer" data="/south/west/six/data"]
+
+    ns [class="forwarder"]
+    ns -> f1 [label="/nfd/f1"]
+    ns -> f2 [label="/nfd/f2"]
+    ns -> f3 [label="/nfd/f3"]
+    ns -> f4 [label="/nfd/f4"]
+    ns -> f5 [label="/nfd/f5"]
+    ns -> f6 [label="/nfd/f6"]
+    ns -> f7 [label="/nfd/f7"]
+    ns -> f8 [label="/nfd/f8"]
+    ns -> f9 [label="/nfd/f9"]
+    ns -> f10 [label="/nfd/f10"]
 }
