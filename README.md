@@ -142,7 +142,7 @@ digraph G {
 ```
 
 ### Generating the build directory from a DOT file
-First, build the base `nfd` Docker image from the NFD `build` image.
+First, build the base `ndn-traceroute` Docker image from the NFD `build` image.
 
 ```bash
 docker build -f NFD/Dockerfile -t nfd-build --target build NFD/
