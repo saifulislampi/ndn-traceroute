@@ -105,7 +105,7 @@ class NFD_Node():
     def service_headers(self):
         return (
             '{}:'.format(self.name),
-            '  image: nfd',
+            '  image: ndn-traceroute',
             '  container_name: {}'.format(self.name),
             '  networks:',
             '    ndn-net:',
@@ -164,12 +164,17 @@ if __name__ == '__main__':
         description='A program to build a docker compose file for an NDN network given a .dot file specifying the network',
     )
 
-    parser.add_argument('GRAPH', help='.dot file of the network', type=Path)
-    parser.add_argument('CONFIG_TEMPLATE', help='special NFD configuration template file', type=Path)
+    parser.add_argument('GRAPH', help='DOT file specifying the network', type=Path)
+    parser.add_argument(
+        '--config-template',
+        help='Path to special NFD configuration template file. Default: utils/nfd.conf.template',
+        type=Path,
+        default=Path('utils/nfd.conf.template')
+    )
 
     args = parser.parse_args()
 
     graphs = pydot.graph_from_dot_file(args.GRAPH)
 
     network = NFD_Network(graphs[0])
-    network.build(args.CONFIG_TEMPLATE)
+    network.build(args.config_template)

@@ -1,4 +1,4 @@
-FROM nfd-base
+FROM nfd-build
 
 RUN apt-get update && apt-get install -Uy --no-install-recommends \
         build-essential cmake sudo \
