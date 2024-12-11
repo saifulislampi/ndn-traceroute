@@ -150,7 +150,7 @@ docker build -t ndn-traceroute .
 ```
 
 To generate the build directory, run the `build-net.py` utility.
-```bash
+```
 $ python3 build-net.py --help
 
 usage: build-net.py [-h] [--config-template CONFIG_TEMPLATE] GRAPH
